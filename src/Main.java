@@ -12,24 +12,30 @@ public class Main {
          * Spiders = Number of taget nodes to be sent
          */
         final String url = "https://google.com";
-        final int spiders = 100;
+        final int spiders = 5;
 
-        ForkJoinPool pool = new ForkJoinPool(10);
-        List<Ping> list = new ArrayList<>();
+        /**
+         * Uses virtual threads to spawn over an overwhelming number of threads
+         * to take down a target url
+         */
+        ExecutorService vt = Executors.newVirtualThreadPerTaskExecutor();
+            List<Callable<String>> tasks = new ArrayList<>();
+            for (int i = 0; i < spiders; i++) {
+                tasks.add(new Ping(url));
+            }
 
-        for(int i=0; i<spiders; i++) {
-            list.add(new Ping(url));
-        }
+            // Submit all tasks and collect futures
+            List<Future<String>> futures = new ArrayList<>();
+            for (Callable<String> task : tasks) {
+                futures.add(vt.submit(task));
+            }
 
-        List<ForkJoinTask<String>> futures = new ArrayList<>();
-        for(Ping p : list){
-            futures.add(pool.submit(p));
-        }
-
-        for (ForkJoinTask<String> future : futures) {
-            System.out.println(future.join());
-        }
-        //Graceful shutdown the threadpool
-        pool.shutdown();
+            for (Future<String> future : futures) {
+                try {
+                    System.out.println(future.get(10, TimeUnit.SECONDS));
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    System.err.println("Task failed: " + e.getMessage());
+                }
+            }
     }
 }

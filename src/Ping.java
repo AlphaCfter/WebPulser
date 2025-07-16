@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Random;
-import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.Callable;
 
 /**
  * A ForkJoin RecursiveTask that continuously sends HTTP GET requests
@@ -10,7 +10,7 @@ import java.util.concurrent.RecursiveTask;
  * The task runs indefinitely between each request.
  * Designed for IO-bound URL pinging and demonstration purposes.
  */
-class Ping extends RecursiveTask<String> {
+class Ping implements Callable<String> {
     private final String url;
     public Ping(String url){
         this.url = url;
@@ -33,7 +33,7 @@ class Ping extends RecursiveTask<String> {
     };
     private static final Random random = new Random();
     @Override
-    protected String compute() {
+    public String call() {
         try {
             long start = System.currentTimeMillis();
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
